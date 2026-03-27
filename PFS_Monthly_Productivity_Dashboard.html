@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Staff Productivity Dashboard — PFS Credit Resolution Refund Team</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f2544;--navy2:#1c3a6b;--navy3:#254d8f;--gold:#c9a227;--g1:#f8f9fb;--g2:#eef1f6;--g3:#dce2ec;--g4:#a0aec0;--g5:#64748b;--g6:#334155;--green:#15803d;--green-lt:#f0fdf4;--green-bd:#bbf7d0;--green-mid:#16a34a;--amber:#b45309;--amber-lt:#fffbeb;--amber-bd:#fde68a;--amber-mid:#d97706;--red:#b91c1c;--red-lt:#fef2f2;--red-bd:#fecaca;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-tx:#1d4ed8}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--g1);color:var(--g6);font-size:12px}
+.portal{display:flex;flex-direction:column;min-height:100vh}
+.hdr{background:var(--navy);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-badge{background:var(--gold);color:var(--navy);font-weight:700;font-size:12px;padding:5px 9px;border-radius:5px}
+.hdr-info .h1{color:#fff;font-size:14px;font-weight:700}
+.hdr-info .h2{color:rgba(255,255,255,.45);font-size:10px;margin-top:1px}
+.hdr-right{color:rgba(255,255,255,.4);font-size:10px;text-align:right}
+.ctrl-bar{background:var(--navy2);padding:8px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:2px solid var(--gold)}
+.ctrl-bar label{color:rgba(255,255,255,.6);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.ctrl-bar input[type=number],.ctrl-bar select{padding:4px 8px;border:1px solid rgba(255,255,255,.2);border-radius:5px;font-size:12px;font-family:inherit;background:rgba(255,255,255,.1);color:#fff;width:70px}
+.ctrl-bar input[type=number]:focus,.ctrl-bar select:focus{outline:none;border-color:var(--gold)}
+.ctrl-bar select option{background:var(--navy2);color:#fff}
+.ctrl-bar .csep{width:1px;height:20px;background:rgba(255,255,255,.15);margin:0 4px}
+.btn{padding:5px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--g3);background:#fff;color:var(--g6);font-family:inherit;transition:all .1s;white-space:nowrap}
+.btn:hover{background:var(--g2)}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.primary:hover{background:var(--navy2)}
+.btn.gold{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:700}
+.btn.dl{background:var(--green-mid);color:#fff;border-color:var(--green-mid)}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7);font-size:10px}
+.btn.ghost:hover{background:rgba(255,255,255,.08);color:#fff}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.nav{background:var(--g2);border-bottom:1px solid var(--g3);display:flex;padding:0 14px;gap:1px;flex-wrap:wrap}
+.tab{padding:8px 12px;font-size:11px;font-weight:500;color:var(--g5);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;font-family:inherit}
+.tab:hover{color:var(--navy)}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy);font-weight:700}
+.body{flex:1;padding:12px 14px}
+.sep{flex:1}
+.stats-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.scard{background:#fff;border:1px solid var(--g3);border-radius:8px;padding:10px 12px;text-align:center}
+.scard .sv{font-size:20px;font-weight:700;color:var(--navy)}
+.scard .sl{font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.scard.g .sv{color:var(--green-mid)}
+.scard.a .sv{color:var(--amber-mid)}
+.scard.r .sv{color:var(--red)}
+.scard.b .sv{color:var(--blue-tx)}
+.cal-wrap{overflow-x:auto;margin-bottom:12px}
+.cal-tbl{border-collapse:collapse;font-size:11px;min-width:100%}
+.cal-tbl th{background:var(--navy);color:#fff;padding:5px 7px;text-align:center;font-weight:600;font-size:10px;white-space:nowrap;position:sticky;top:0;z-index:2}
+.cal-tbl th.name-col{text-align:left;min-width:110px;position:sticky;left:0;z-index:3}
+.cal-tbl td{padding:4px 6px;border:0.5px solid var(--g3);text-align:center;min-width:38px;vertical-align:middle}
+.cal-tbl td.name-col{text-align:left;background:#fff;font-weight:600;color:var(--navy);position:sticky;left:0;z-index:1;padding:4px 8px;min-width:110px}
+.cal-tbl td.tl-name{background:#f8f8f8!important;color:var(--g4)!important;font-style:italic}
+.cal-tbl td.tl-cell{background:#f8f8f8!important;color:var(--g4)!important}
+.cal-tbl tr:hover td:not(.name-col){filter:brightness(.95)}
+.cal-tbl td.weekend{background:var(--g2)!important;color:var(--g4)}
+.cal-tbl td.no-data{color:var(--g4);font-size:9px}
+.c-green{background:#dcfce7;color:#166534;font-weight:600}
+.c-yellow{background:#fef9c3;color:#854d0e;font-weight:600}
+.c-red{background:#fee2e2;color:#991b1b;font-weight:600}
+.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.rank-card{background:#fff;border:1px solid var(--g3);border-radius:8px;overflow:hidden}
+.rank-card .rch{padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.rank-card.top .rch{background:var(--green-lt);color:var(--green);border-bottom:1px solid var(--green-bd)}
+.rank-card.bot .rch{background:var(--red-lt);color:var(--red);border-bottom:1px solid var(--red-bd)}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:0.5px solid var(--g2)}
+.rank-row:last-child{border-bottom:none}
+.rank-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.top .rank-num{background:var(--green-lt);color:var(--green)}
+.bot .rank-num{background:var(--red-lt);color:var(--red)}
+.rank-name{font-size:12px;font-weight:600;color:var(--navy);flex:1}
+.rank-rate{font-size:12px;font-weight:700}
+.top .rank-rate{color:var(--green-mid)}
+.bot .rank-rate{color:var(--red)}
+.rank-bar-bg{flex:1;background:var(--g3);border-radius:3px;height:6px;max-width:80px}
+.rank-bar{height:6px;border-radius:3px}
+.top .rank-bar{background:var(--green-mid)}
+.bot .rank-bar{background:var(--red)}
+.goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px}
+.goal-item{display:flex;flex-direction:column;gap:3px}
+.goal-item label{font-size:10px;font-weight:600;color:var(--g5);text-transform:uppercase;letter-spacing:.3px}
+.goal-item input{padding:5px 8px;border:1px solid var(--g3);border-radius:5px;font-size:12px;font-family:inherit;color:var(--g6);width:100%}
+.goal-item input:focus{outline:none;border-color:var(--navy3)}
+.member-settings{display:flex;flex-direction:column;gap:6px}
+.mem-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g1);border:1px solid var(--g2);border-radius:6px}
+.mem-row .mname{flex:1;font-size:12px;font-weight:600;color:var(--navy)}
+.mem-row .tl-tag{font-size:9px;background:#e8edf6;color:var(--navy2);padding:1px 6px;border-radius:3px;font-weight:700}
+.mem-row .toggle-opts{display:flex;gap:4px}
+.mem-row label{font-size:10px;color:var(--g5);display:flex;align-items:center;gap:3px;cursor:pointer}
+.notes-area{width:100%;padding:8px 10px;border:1px solid var(--g3);border-radius:6px;font-size:12px;font-family:inherit;color:var(--g6);resize:vertical;min-height:80px}
+.notes-area:focus{outline:none;border-color:var(--navy3)}
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,37,68,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:1000}
+.modal{background:#fff;border-radius:10px;width:100%;max-width:520px;overflow:hidden;border:1px solid var(--g3);max-height:90vh;display:flex;flex-direction:column}
+.mhdr{background:var(--navy);padding:11px 15px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mt{color:#fff;font-size:13px;font-weight:700}
+.mx{color:rgba(255,255,255,.5);cursor:pointer;font-size:17px;line-height:1}
+.mx:hover{color:#fff}
+.mbody{padding:14px;overflow-y:auto;flex:1}
+.mfoot{padding:9px 14px;background:var(--g1);border-top:1px solid var(--g2);display:flex;gap:6px;justify-content:flex-end;flex-shrink:0}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.field input,.field select,.field textarea{width:100%;padding:6px 9px;border:1px solid var(--g3);border-radius:5px;font-size:12px;font-family:inherit;color:var(--g6)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy3)}
+.info{background:var(--blue-lt);border:1px solid var(--blue-bd);border-radius:5px;padding:8px 10px;font-size:10px;color:var(--blue-tx);margin-top:7px}
+.rrow{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid var(--g2)}
+.rrow:last-child{border-bottom:none}
+.rname{font-weight:600;font-size:12px;color:var(--navy)}
+.rdesc{font-size:10px;color:var(--g4);margin-top:1px}
+.pw-footer{background:var(--navy);padding:6px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pft{color:rgba(255,255,255,.25);font-size:9px;flex:1;letter-spacing:.3px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#fff;border:1px solid var(--g3);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.card-hdr{background:var(--g1);border-bottom:1px solid var(--g3);padding:8px 12px;display:flex;align-items:center;justify-content:space-between}
+.ctitle{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.4px}
+.empty{text-align:center;padding:24px;color:var(--g4);font-size:12px}
+.range-row{display:flex;align-items:center;gap:6px}
+.range-row input[type=date]{padding:4px 7px;border:1px solid rgba(255,255,255,.2);border-radius:5px;font-size:11px;font-family:inherit;background:rgba(255,255,255,.1);color:#fff}
+.range-row input[type=date]:focus{outline:none;border-color:var(--gold)}
+.dz{border:2px dashed var(--g3);border-radius:6px;padding:14px;text-align:center;cursor:pointer;background:var(--g1)}
+.dz:hover{border-color:var(--navy3);background:var(--blue-lt)}
+.dz input{display:none}
+.tmpl{font-size:10px;color:var(--blue-tx);cursor:pointer;text-decoration:underline}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--navy);color:#fff;padding:6px 9px;text-align:left;font-weight:600;font-size:11px;white-space:nowrap}
+td{padding:5px 9px;border-bottom:0.5px solid var(--g2);vertical-align:middle;color:var(--g6)}
+</style>
+</head>
+<body>
+<div class="portal" id="app">
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-badge">PFS</div>
+    <div class="hdr-info">
+      <div class="h1">Monthly Staff Productivity Dashboard</div>
+      <div class="h2">Credit Resolution Refund Team &nbsp;&bull;&nbsp; UF Health Shands</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div id="hdr-date"></div>
+    <div id="last-updated" style="margin-top:4px;font-size:10px;color:rgba(255,255,255,.35)">Last updated: —</div>
+  </div>
+</div>
+<div class="ctrl-bar">
+  <label>Month</label>
+  <select id="sel-month" onchange="onMonthChange()">
+    <option value="1">January</option><option value="2">February</option>
+    <option value="3" selected>March</option><option value="4">April</option>
+    <option value="5">May</option><option value="6">June</option>
+    <option value="7">July</option><option value="8">August</option>
+    <option value="9">September</option><option value="10">October</option>
+    <option value="11">November</option><option value="12">December</option>
+  </select>
+  <label>Year</label>
+  <input type="number" id="sel-year" value="2026" min="2020" max="2035" style="width:62px" onchange="onMonthChange()">
+  <div class="csep"></div>
+  <label>Daily Goal</label>
+  <input type="number" id="default-goal" value="60" min="1" style="width:55px" onchange="render()" title="Default daily target">
+  <div class="csep"></div>
+  <label>Range</label>
+  <div class="range-row">
+    <input type="date" id="range-from" onchange="render()">
+    <span style="color:rgba(255,255,255,.4);font-size:10px">to</span>
+    <input type="date" id="range-to" onchange="render()">
+    <button class="btn ghost" onclick="clearRange()">All</button>
+  </div>
+  <div class="csep"></div>
+  <button class="btn ghost" onclick="showUploadData()">&#8679; Upload</button>
+  <button class="btn ghost" onclick="setTab('goals')">Goals</button>
+  <div class="csep"></div>
+  <button class="btn ghost" onclick="saveSnapshot()" title="Stamp your name and time, then download the updated file for Teams" style="border-color:var(--gold);color:var(--gold);font-weight:700">&#8681; Save &amp; Share</button>
+  <span class="sep"></span>
+  <button class="btn gold" onclick="setTab('reports')">Reports</button>
+</div>
+<div class="nav">
+  <button class="tab on" id="tab-dashboard" onclick="setTab('dashboard')">Dashboard</button>
+  <button class="tab" id="tab-daily" onclick="setTab('daily')">Daily View</button>
+  <button class="tab" id="tab-member" onclick="setTab('member')">By Member</button>
+  <button class="tab" id="tab-goals" onclick="setTab('goals')">Goals &amp; Settings</button>
+  <button class="tab" id="tab-reports" onclick="setTab('reports')">Reports</button>
+</div>
+<div class="body" id="main-body"></div>
+<div class="pw-footer">
+  <span class="pft">A Joy Watford Design &bull; PFS Credit Resolution Dept (Refund Team) &bull; UF Health Shands &bull; May be adapted by other departments with attribution</span>
+</div>
+</div>
+<script>
+
+const NOW=new Date();
+let currentTab='dashboard',currentMonth=3,currentYear=2026;
+let monthlyGoals={'2026_1':50,'2026_2':60,'2026_3':60};
+let dailyGoalOverrides={};
+let productivityData={};
+let monthNotes={};
+const STAFF=['Antwanna','Julie','Lee Ann','Linda','Melody','Rebecca','Reema','Rhonda','Sherazard','Star','Toya'];
+const TL_NAME='Joy';
+let memberConfig=STAFF.map(n=>({name:n,isTL:false,exRank:false,exStats:false,exReport:false,goal:null}));
+memberConfig.push({name:TL_NAME,isTL:true,exRank:true,exStats:true,exReport:false,goal:null});
+
+function seedData(){
+  const jan={};
+  [['2026-01-02',{LeeAnn:109,Reema:41,Sherazard:12,Star:84,Toya:35}],['2026-01-05',{Antwanna:59,LeeAnn:151,Linda:20,Melody:55,Reema:61,Rhonda:57,Star:86,Toya:51}],['2026-01-06',{Antwanna:85,Julie:35,LeeAnn:108,Linda:58,Melody:43,Reema:92,Rhonda:41,Sherazard:27,Star:75,Toya:35}],['2026-01-07',{Antwanna:70,Julie:46,LeeAnn:148,Linda:46,Melody:56,Reema:52,Rhonda:99,Sherazard:25,Star:194,Toya:30}],['2026-01-08',{Antwanna:36,Julie:46,LeeAnn:219,Linda:16,Melody:52,Reema:63,Rhonda:45,Sherazard:42,Star:66,Toya:41}],['2026-01-09',{Antwanna:18,Julie:53,LeeAnn:169,Linda:20,Melody:53,Reema:45,Rhonda:44,Sherazard:37,Star:96,Toya:50}],['2026-01-10',{Star:40}],['2026-01-12',{Antwanna:28,Julie:43,LeeAnn:105,Linda:73,Melody:61,Reema:60,Rhonda:90,Sherazard:43,Star:93,Toya:49}],['2026-01-13',{Antwanna:77,Julie:47,LeeAnn:155,Linda:62,Melody:32,Reema:69,Rhonda:57,Sherazard:22,Star:97,Toya:50}],['2026-01-14',{Antwanna:41,Julie:49,LeeAnn:115,Linda:15,Melody:42,Reema:81,Rhonda:47,Sherazard:30,Star:156,Toya:43}],['2026-01-15',{Antwanna:26,Julie:55,LeeAnn:221,Linda:56,Melody:47,Reema:81,Rhonda:24,Star:121,Toya:50}],['2026-01-16',{Antwanna:42,Julie:37,LeeAnn:148,Linda:66,Melody:32,Reema:59,Rhonda:41,Star:103,Toya:46}],['2026-01-17',{Star:41}],['2026-01-20',{Antwanna:88,Julie:57,LeeAnn:183,Linda:43,Melody:33,Reema:60,Rhonda:57,Sherazard:39,Star:98}],['2026-01-21',{Antwanna:27,Julie:27,LeeAnn:173,Linda:40,Melody:23,Reema:70,Rhonda:61,Sherazard:29,Star:163}],['2026-01-22',{Antwanna:35,Julie:51,LeeAnn:229,Linda:52,Melody:50,Reema:110,Rhonda:86,Sherazard:32,Star:70}],['2026-01-23',{Antwanna:23,Julie:58,LeeAnn:244,Linda:41,Reema:54,Rhonda:60,Star:97}],['2026-01-26',{Antwanna:87,Julie:46,LeeAnn:220,Linda:20,Melody:56,Reema:90,Rhonda:52,Sherazard:47,Star:89,Toya:45}],['2026-01-27',{Antwanna:83,Julie:44,Linda:87,Melody:49,Reema:61,Rhonda:65,Sherazard:43,Star:118,Toya:48}],['2026-01-28',{Antwanna:55,Julie:48,Linda:50,Melody:54,Reema:74,Rhonda:44,Sherazard:44,Star:179,Toya:47}]].forEach(([d,v])=>{productivityData[d]={};Object.entries(v).forEach(([k,n])=>{productivityData[d][k==='LeeAnn'?'Lee Ann':k]=n;});});
+  [['2026-02-02',{Antwanna:35,Julie:56,LeeAnn:209,Linda:58,Melody:47,Reema:58,Rhonda:62,Sherazard:44,Star:99,Toya:51}],['2026-02-03',{Antwanna:19,Julie:44,LeeAnn:240,Linda:73,Melody:35,Reema:102,Rhonda:41,Sherazard:46,Star:229,Toya:48}],['2026-02-04',{Antwanna:50,Julie:59,LeeAnn:102,Linda:94,Melody:52,Reema:86,Rhonda:34,Sherazard:45,Star:273,Toya:50}],['2026-02-05',{Antwanna:53,Julie:51,LeeAnn:230,Linda:58,Melody:33,Reema:79,Rhonda:15,Sherazard:24,Star:258,Toya:47}],['2026-02-06',{Antwanna:89,Julie:33,LeeAnn:205,Linda:51,Reema:88,Sherazard:39,Star:338,Toya:47}],['2026-02-09',{Antwanna:53,Julie:77,LeeAnn:96,Linda:63,Melody:40,Reema:68,Sherazard:34,Star:239,Toya:53}],['2026-02-10',{Antwanna:104,Julie:49,LeeAnn:107,Linda:61,Melody:31,Reema:118,Rhonda:63,Sherazard:42,Star:245,Toya:45}],['2026-02-11',{Antwanna:100,Julie:56,LeeAnn:146,Linda:92,Melody:51,Reema:71,Rhonda:13,Sherazard:46,Star:242,Toya:48}],['2026-02-12',{Antwanna:106,Julie:55,LeeAnn:49,Linda:69,Melody:39,Reema:87,Rhonda:66,Sherazard:52,Star:142,Toya:32}],['2026-02-13',{Antwanna:94,Julie:58,Melody:59,Reema:96,Rhonda:16,Star:158,Toya:46}],['2026-02-16',{Antwanna:136,Julie:56,LeeAnn:28,Linda:20,Reema:91,Rhonda:17,Sherazard:48,Star:129,Toya:49}],['2026-02-17',{Antwanna:26,Julie:64,Linda:50,Reema:91,Rhonda:26,Sherazard:49,Star:164,Toya:48}],['2026-02-18',{Antwanna:88,Julie:46,Linda:57,Reema:65,Rhonda:33,Sherazard:57,Star:121,Toya:48}],['2026-02-19',{Antwanna:126,Linda:69,Reema:83,Rhonda:23,Sherazard:47,Star:143,Toya:51}],['2026-02-20',{Antwanna:68,Linda:50,Reema:77,Rhonda:77,Sherazard:52,Star:176,Toya:43}],['2026-02-23',{Julie:48,Linda:74,Reema:68,Rhonda:15,Sherazard:18,Star:309,Toya:50}],['2026-02-24',{Antwanna:75,Julie:53,Linda:56,Reema:69,Rhonda:22,Sherazard:50,Toya:45}],['2026-02-25',{Julie:48,Linda:45,Reema:48,Rhonda:15,Sherazard:52,Toya:32}],['2026-02-26',{Antwanna:90,Julie:47,LeeAnn:92,Reema:74,Rhonda:35,Sherazard:45,Star:306,Toya:47}],['2026-02-27',{Antwanna:61,Julie:71,LeeAnn:57,Reema:56,Rhonda:73,Sherazard:49,Star:156,Toya:50}]].forEach(([d,v])=>{productivityData[d]={};Object.entries(v).forEach(([k,n])=>{productivityData[d][k==='LeeAnn'?'Lee Ann':k]=n;});});
+  [['2026-03-02',{Antwanna:65,Julie:110,Reema:83,Rhonda:21,Sherazard:39,Star:173,Toya:60,Joy:10}],['2026-03-03',{Antwanna:43,Julie:97,LeeAnn:81,Linda:44,Rebecca:5,Reema:110,Rhonda:68,Sherazard:37,Star:278,Toya:69}],['2026-03-04',{Antwanna:37,Julie:108,LeeAnn:103,Linda:77,Rebecca:23,Reema:99,Rhonda:74,Sherazard:63,Star:225,Toya:65,Joy:1}],['2026-03-05',{Antwanna:22,Julie:71,LeeAnn:104,Linda:60,Rebecca:7,Rhonda:31,Sherazard:61,Star:337,Toya:45,Joy:3}],['2026-03-06',{Antwanna:52,Julie:66,LeeAnn:57,Linda:31,Rebecca:13,Reema:59,Rhonda:92,Sherazard:60,Star:285,Toya:56,Joy:6}],['2026-03-07',{Julie:150,Star:127}],['2026-03-09',{Antwanna:183,Julie:41,LeeAnn:98,Linda:110,Reema:91,Rhonda:46,Sherazard:56,Star:184,Toya:61}],['2026-03-10',{Antwanna:56,Julie:81,LeeAnn:183,Linda:74,Rebecca:10,Reema:87,Rhonda:72,Sherazard:61,Star:124,Toya:64}],['2026-03-11',{Antwanna:37,Julie:79,LeeAnn:199,Linda:61,Rebecca:10,Reema:80,Rhonda:81,Sherazard:68,Star:248,Toya:60}],['2026-03-12',{Antwanna:42,Julie:79,LeeAnn:205,Linda:71,Reema:84,Rhonda:54,Sherazard:57,Star:79,Toya:61}],['2026-03-13',{Antwanna:60,Julie:63,LeeAnn:183,Linda:119,Rebecca:11,Reema:59,Rhonda:72,Sherazard:63,Star:140,Toya:61,Joy:10}],['2026-03-14',{Antwanna:41,Star:61}],['2026-03-16',{Antwanna:103,Julie:72,LeeAnn:141,Linda:97,Reema:81,Rhonda:66,Sherazard:52,Star:133,Toya:60,Joy:24}],['2026-03-17',{Antwanna:76,Julie:66,LeeAnn:96,Linda:116,Rebecca:18,Reema:74,Rhonda:71,Sherazard:42,Star:126,Toya:60}],['2026-03-18',{Antwanna:112,Julie:79,Linda:143,Rebecca:52,Reema:78,Rhonda:79,Sherazard:51,Star:252,Toya:42,Joy:11}],['2026-03-19',{Antwanna:99,Julie:92,LeeAnn:154,Linda:86,Rebecca:68,Reema:72,Rhonda:58,Sherazard:32,Star:82,Toya:37}],['2026-03-20',{Antwanna:49,Julie:58,LeeAnn:39,Linda:75,Rebecca:9,Reema:66,Sherazard:49,Star:186,Toya:62}],['2026-03-21',{Antwanna:7,Julie:104,Star:144}],['2026-03-23',{Antwanna:111,Julie:45,LeeAnn:78,Linda:109,Reema:66,Sherazard:40,Star:110,Toya:60,Joy:19}],['2026-03-24',{Antwanna:63,Julie:52,LeeAnn:59,Linda:71,Rebecca:58,Reema:90,Rhonda:16,Sherazard:24,Star:137,Toya:60,Joy:9}]].forEach(([d,v])=>{productivityData[d]={};Object.entries(v).forEach(([k,n])=>{productivityData[d][k==='LeeAnn'?'Lee Ann':k]=n;});});
+}
+seedData();
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtDate(d){return d.toISOString().slice(0,10);}
+function isWeekend(d){return d.getDay()===0||d.getDay()===6;}
+function getGoal(ds){if(dailyGoalOverrides[ds])return dailyGoalOverrides[ds];const d=new Date(ds);const mk=d.getFullYear()+'_'+(d.getMonth()+1);if(monthlyGoals[mk])return monthlyGoals[mk];return parseInt(document.getElementById('default-goal').value)||60;}
+function getMemberGoal(name,ds){const mc=memberConfig.find(m=>m.name===name);if(mc&&mc.goal)return mc.goal;return getGoal(ds);}
+function getMonthDays(y,m){const days=[];const d=new Date(y,m-1,1);while(d.getMonth()===m-1){days.push(new Date(d));d.setDate(d.getDate()+1);}return days;}
+function getFilteredDays(){const allDays=getMonthDays(currentYear,currentMonth);const from=document.getElementById('range-from').value;const to=document.getElementById('range-to').value;if(!from&&!to)return allDays;return allDays.filter(d=>{const ds=fmtDate(d);if(from&&ds<from)return false;if(to&&ds>to)return false;return true;});}
+function getWorkdays(days){return days.filter(d=>!isWeekend(d));}
+function colorClass(val,goal){if(val==null)return'';if(val>=goal)return'c-green';if(val>=goal-10)return'c-yellow';return'c-red';}
+function calcMemberStats(name,days){const mc=memberConfig.find(m=>m.name===name);const workdays=getWorkdays(days);let met=0,total=0,sum=0,entries=[];workdays.forEach(d=>{const ds=fmtDate(d);const val=productivityData[ds]?productivityData[ds][name]:null;if(val==null)return;total++;sum+=val;const goal=getMemberGoal(name,ds);if(val>=goal)met++;entries.push({date:ds,val,goal});});const rate=total>0?Math.round(met/total*100):null;const avg=total>0?Math.round(sum/total):null;return{name,met,total,rate,avg,sum,entries,isTL:mc&&mc.isTL,exRank:mc&&mc.exRank,exStats:mc&&mc.exStats};}
+function getTeamStats(days){return memberConfig.filter(m=>!m.exStats&&!m.isTL).map(m=>calcMemberStats(m.name,days));}
+function getRankings(days){const stats=getTeamStats(days).filter(s=>!s.exRank&&s.total>0);const sorted=[...stats].sort((a,b)=>(b.rate||0)-(a.rate||0));const top=sorted.slice(0,3);const bot=[...stats].sort((a,b)=>(a.rate||0)-(b.rate||0)).slice(0,3);return{top,bot};}
+function getWeekNum(d){const s=new Date(d.getFullYear(),0,1);return Math.floor(((d-s)+(s.getTimezoneOffset()-d.getTimezoneOffset())*60000)/(7*86400000))+1;}
+function getWeekStats(days){const workdays=getWorkdays(days);const weeks={};workdays.forEach(d=>{const ds=fmtDate(d);const wk=getWeekNum(d);if(!weeks[wk])weeks[wk]={label:'Wk '+wk,days:[],met:0,total:0};weeks[wk].days.push(ds);memberConfig.filter(m=>!m.exStats&&!m.isTL).forEach(m=>{const val=productivityData[ds]?productivityData[ds][m.name]:null;if(val==null)return;weeks[wk].total++;if(val>=getMemberGoal(m.name,ds))weeks[wk].met++;});});return Object.values(weeks).map(w=>({...w,rate:w.total>0?Math.round(w.met/w.total*100):null}));}
+function getDaySuccessRate(ds){const active=memberConfig.filter(m=>!m.exStats&&!m.isTL);let met=0,total=0;active.forEach(m=>{const val=productivityData[ds]?productivityData[ds][m.name]:null;if(val==null)return;total++;if(val>=getMemberGoal(m.name,ds))met++;});return total>0?Math.round(met/total*100):null;}
+function pct(n){return n==null?'—':n+'%';}
+function setTab(t){currentTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));const el=document.getElementById('tab-'+t);if(el)el.classList.add('on');render();}
+function onMonthChange(){currentMonth=parseInt(document.getElementById('sel-month').value);currentYear=parseInt(document.getElementById('sel-year').value);clearRange();}
+function clearRange(){document.getElementById('range-from').value='';document.getElementById('range-to').value='';render();}
+
+function renderDashboard(){
+  const days=getFilteredDays();const workdays=getWorkdays(days);const allStats=getTeamStats(days);const{top,bot}=getRankings(days);const weekStats=getWeekStats(days);
+  const monthGoal=monthlyGoals[currentYear+'_'+currentMonth]||parseInt(document.getElementById('default-goal').value)||60;
+  const monthName=new Date(currentYear,currentMonth-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  let teamMet=0,teamTotal=0;allStats.forEach(s=>{teamMet+=s.met;teamTotal+=s.total;});
+  const teamRate=teamTotal>0?Math.round(teamMet/teamTotal*100):null;
+  let lastWdStr=null;for(let i=workdays.length-1;i>=0;i--){const ds=fmtDate(workdays[i]);if(productivityData[ds]&&Object.keys(productivityData[ds]).length>0){lastWdStr=ds;break;}}
+  const dayRate=lastWdStr?getDaySuccessRate(lastWdStr):null;
+  let bestDay=null,bestRate=-1;workdays.forEach(d=>{const ds=fmtDate(d);const r=getDaySuccessRate(ds);if(r!=null&&r>bestRate){bestRate=r;bestDay=ds;}});
+  const cw=weekStats[weekStats.length-1];
+  let html=`<div class="stats-strip"><div class="scard"><div class="sv">${monthName.split(' ')[0]}</div><div class="sl">Month</div></div><div class="scard b"><div class="sv">${pct(dayRate)}</div><div class="sl">Last Workday</div></div><div class="scard ${teamRate>=70?'g':teamRate>=50?'':'r'}"><div class="sv">${pct(teamRate)}</div><div class="sl">MTD Team Rate</div></div><div class="scard g"><div class="sv">${bestDay?new Date(bestDay+'T12:00').getDate()+'th':'—'}</div><div class="sl">Best Day</div></div><div class="scard"><div class="sv">${monthGoal}</div><div class="sl">Daily Goal</div></div><div class="scard ${cw&&cw.rate>=70?'g':cw&&cw.rate>=50?'a':'r'}"><div class="sv">${cw?pct(cw.rate):'—'}</div><div class="sl">This Week</div></div></div>`;
+  html+=`<div class="rank-grid"><div class="rank-card top"><div class="rch">Top 3 Meeting Standard</div>${top.length===0?'<div class="empty">No data yet</div>':top.map((s,i)=>`<div class="rank-row"><span class="rank-num">${i+1}</span><span class="rank-name">${esc(s.name)}</span><div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.min(100,s.rate||0)}%"></div></div><span class="rank-rate">${pct(s.rate)}</span></div>`).join('')}</div><div class="rank-card bot"><div class="rch">Needs Support</div>${bot.length===0?'<div class="empty">No data yet</div>':bot.map((s,i)=>`<div class="rank-row"><span class="rank-num">${i+1}</span><span class="rank-name">${esc(s.name)}</span><div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.min(100,s.rate||0)}%"></div></div><span class="rank-rate">${pct(s.rate)}</span></div>`).join('')}</div></div>`;
+  if(weekStats.length>0)html+=`<div class="card" style="margin-bottom:10px"><div class="card-hdr"><span class="ctitle">Weekly Success Rates</span></div><div style="padding:10px 12px;display:flex;gap:10px;flex-wrap:wrap">${weekStats.map(w=>`<div style="text-align:center;background:var(--g1);border-radius:6px;padding:8px 14px;border:1px solid var(--g2);min-width:70px"><div style="font-size:16px;font-weight:700;color:${w.rate>=70?'var(--green-mid)':w.rate>=50?'var(--amber-mid)':'var(--red)'}">${pct(w.rate)}</div><div style="font-size:9px;color:var(--g4);margin-top:2px">${esc(w.label)}</div></div>`).join('')}</div></div>`;
+  html+=`<div class="card"><div class="card-hdr"><span class="ctitle">Member MTD Summary</span><span style="font-size:10px;color:var(--g4)">as of today</span></div><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left;min-width:110px">Member</th><th>Days Worked</th><th>Days Met</th><th>Success Rate</th><th>Avg Daily</th><th>Total</th></tr></thead><tbody>${memberConfig.map((mc,ri)=>{const s=calcMemberStats(mc.name,days);const isTL=mc.isTL;const rate=s.rate;const rateCls=isTL?'':rate==null?'':rate>=70?'c-green':rate>=50?'c-yellow':'c-red';return`<tr style="${ri%2===0?'background:var(--g1)':''}"><td style="text-align:left;font-weight:600;color:${isTL?'var(--g4)':'var(--navy)'};padding:5px 8px">${esc(mc.name)}${isTL?'<span style="font-size:9px;background:#e8edf6;color:var(--g4);padding:1px 4px;border-radius:3px;margin-left:4px">TL</span>':''}</td><td style="text-align:center;color:${isTL?'var(--g4)':''}">${s.total||'—'}</td><td style="text-align:center;color:${isTL?'var(--g4)':''}">${s.met||'—'}</td><td class="${rateCls}" style="text-align:center;font-weight:700">${isTL?'<span style="color:var(--g4)">TL</span>':pct(s.rate)}</td><td style="text-align:center;color:${isTL?'var(--g4)':''}">${s.avg||'—'}</td><td style="text-align:center;color:${isTL?'var(--g4)':''}">${s.sum||'—'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+  return html;
+}
+
+function renderDaily(){
+  const days=getFilteredDays();
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:2px;display:inline-block"></span><span style="font-size:10px;color:var(--g5)">Met goal</span></div><div style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#fef9c3;border:1px solid #fde68a;border-radius:2px;display:inline-block"></span><span style="font-size:10px;color:var(--g5)">Within 10</span></div><div style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#fee2e2;border:1px solid #fecaca;border-radius:2px;display:inline-block"></span><span style="font-size:10px;color:var(--g5)">Below</span></div></div><div style="display:flex;gap:5px"><button class="btn sm primary" onclick="showAddEntry()">+ Add Entry</button><button class="btn sm dl" onclick="exportCalendar()">&#8595; Export</button></div></div>`;
+  html+=`<div class="cal-wrap"><table class="cal-tbl"><thead><tr><th class="name-col">Member</th>${days.map(d=>{const ds=fmtDate(d);const wk=isWeekend(d);const dayRate=getDaySuccessRate(ds);const rc=dayRate==null?'rgba(255,255,255,.3)':dayRate>=70?'#4ade80':dayRate>=50?'#fbbf24':'#f87171';return`<th style="${wk?'background:#1a2f4a;':''}" title="${ds}">${d.getDate()}<br><span style="font-size:8px;color:rgba(255,255,255,.5)">${['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()]}</span>${!wk&&dayRate!=null?`<br><span style="font-size:8px;color:${rc}">${dayRate}%</span>`:''}</th>`;}).join('')}<th>Rate</th><th>Avg</th></tr></thead><tbody>`;
+  memberConfig.forEach((mc,ri)=>{const isTL=mc.isTL;html+=`<tr style="${ri%2===0?'background:var(--g1)':''}"><td class="name-col${isTL?' tl-name':''}">${esc(mc.name)}${isTL?'<span style="font-size:8px;margin-left:3px;color:var(--g4)">(TL)</span>':''}</td>`;days.forEach(d=>{const ds=fmtDate(d);const val=productivityData[ds]?productivityData[ds][mc.name]:null;const wk=isWeekend(d);if(wk){html+=`<td class="weekend">—</td>`;return;}if(val==null){html+=`<td class="no-data">—</td>`;return;}const goal=getMemberGoal(mc.name,ds);const cls=isTL?'tl-cell':colorClass(val,goal);html+=`<td class="${cls}" title="${ds}: ${val}" ondblclick="editCell('${ds}','${mc.name}',${val})">${val}</td>`;});const s=calcMemberStats(mc.name,days);const rateCls=isTL?'tl-cell':s.rate==null?'':s.rate>=70?'c-green':s.rate>=50?'c-yellow':'c-red';html+=`<td class="${rateCls}" style="font-weight:700">${isTL?'<span style=\"color:var(--g4)\">TL</span>':pct(s.rate)}</td><td class="${isTL?'tl-cell':''}" style="font-weight:600">${s.avg||'—'}</td></tr>`;});
+  html+=`<tr style="background:var(--navy2)"><td class="name-col" style="background:var(--navy);color:#fff;font-size:10px">Day Rate</td>${days.map(d=>{const ds=fmtDate(d);if(isWeekend(d))return`<td style="background:var(--navy2);color:rgba(255,255,255,.2)">—</td>`;const r=getDaySuccessRate(ds);if(r==null)return`<td style="background:var(--navy2);color:rgba(255,255,255,.3);font-size:9px">—</td>`;const col=r>=70?'#4ade80':r>=50?'#fbbf24':'#f87171';return`<td style="background:var(--navy2);color:${col};font-weight:700;font-size:10px">${r}%</td>`;}).join('')}<td style="background:var(--navy2)"></td><td style="background:var(--navy2)"></td></tr></tbody></table></div>`;
+  return html;
+}
+
+function renderMember(){
+  const days=getFilteredDays();
+  let html=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+  memberConfig.forEach(mc=>{const s=calcMemberStats(mc.name,days);const isTL=mc.isTL;const rate=s.rate;const rc=isTL?'var(--g4)':rate==null?'var(--g4)':rate>=70?'var(--green-mid)':rate>=50?'var(--amber-mid)':'var(--red)';html+=`<div style="background:#fff;border:1px solid var(--g3);border-radius:8px;padding:10px 14px;min-width:130px;${isTL?'opacity:.6;':''}"><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">${esc(mc.name)}${isTL?'<span style="font-size:9px;color:var(--g4);margin-left:3px">(TL)</span>':''}</div><div style="font-size:20px;font-weight:700;color:${rc}">${pct(rate)}</div><div style="font-size:9px;color:var(--g4);margin-top:2px">Success rate MTD</div><div style="font-size:10px;color:var(--g5);margin-top:4px">${s.met}/${s.total} days &bull; avg ${s.avg||'—'}</div></div>`;});
+  html+=`</div>`;
+  memberConfig.filter(m=>!m.exStats||m.isTL).forEach(mc=>{const s=calcMemberStats(mc.name,days);if(s.entries.length===0)return;const isTL=mc.isTL;html+=`<div class="card" style="${isTL?'opacity:.7;':''}margin-bottom:10px"><div class="card-hdr" style="background:${isTL?'#f1f5f9':'var(--navy)'}"><span class="ctitle" style="color:${isTL?'var(--g4)':'#fff'}">${esc(mc.name)}${isTL?' (Team Lead)':''}</span><span style="font-size:10px;color:${isTL?'var(--g4)':'rgba(255,255,255,.6)'}">Success: ${pct(s.rate)} &bull; Avg: ${s.avg||'—'} &bull; Total: ${s.sum}</span></div><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Date</th><th>Accounts</th><th>Goal</th><th>Status</th><th>vs Goal</th></tr></thead><tbody>${s.entries.map((e,i)=>{const diff=e.val-e.goal;const cls=isTL?'':colorClass(e.val,e.goal);const dow=new Date(e.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});return`<tr style="${i%2===0?'background:var(--g1)':''}"><td style="text-align:left">${dow}</td><td class="${cls}" style="text-align:center;font-weight:700">${e.val}</td><td style="text-align:center;color:var(--g4)">${e.goal}</td><td style="text-align:center">${isTL?'<span style=\"color:var(--g4)\">TL</span>':cls==='c-green'?'<span style=\"color:var(--green-mid);font-weight:600\">Met</span>':cls==='c-yellow'?'<span style=\"color:var(--amber-mid)\">Close</span>':'<span style=\"color:var(--red)\">Below</span>'}</td><td style="text-align:center;font-weight:600;color:${diff>=0?'var(--green-mid)':'var(--red)'}">${diff>=0?'+':''}${diff}</td></tr>`;}).join('')}</tbody></table></div></div>`;});
+  return html;
+}
+
+function renderGoals(){
+  const mk=currentYear+'_'+currentMonth;const monthGoal=monthlyGoals[mk]||'';
+  const monthName=new Date(currentYear,currentMonth-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  let html=`<div class="two-col" style="margin-bottom:12px"><div class="card"><div class="card-hdr"><span class="ctitle">Goal Settings</span></div><div style="padding:12px"><div class="goal-item" style="margin-bottom:10px"><label>Default Daily Goal</label><input type="number" id="g-default" value="${document.getElementById('default-goal').value}" min="1" onchange="document.getElementById('default-goal').value=this.value;render()"></div><div class="goal-item" style="margin-bottom:10px"><label>${monthName} Override</label><input type="number" id="g-month" value="${monthGoal}" min="1" placeholder="Leave blank for default" onchange="monthlyGoals['${mk}']=this.value?parseInt(this.value):null;render()"></div><div style="font-size:10px;color:var(--g4);margin-top:4px">Per-person goals override month/default. Daily overrides are highest priority.</div></div></div><div class="card"><div class="card-hdr"><span class="ctitle">Daily Goal Override</span></div><div style="padding:12px"><div class="goal-item" style="margin-bottom:8px"><label>Date</label><input type="date" id="g-day-date" style="width:100%;padding:6px 9px;border:1px solid var(--g3);border-radius:5px;font-size:12px;font-family:inherit"></div><div class="goal-item" style="margin-bottom:8px"><label>Goal for that day</label><input type="number" id="g-day-val" min="1" placeholder="e.g. 45"></div><button class="btn primary" style="width:100%" onclick="addDailyOverride()">Set Daily Override</button>${Object.keys(dailyGoalOverrides).length>0?'<div style="margin-top:10px">'+Object.entries(dailyGoalOverrides).sort().map(([d,g])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:var(--g1);border-radius:4px;margin-bottom:3px;font-size:11px"><span>${d}</span><span style="font-weight:700;color:var(--navy)">${g}</span><button class="btn" style="border:none;color:var(--red);background:none;padding:0;font-size:11px;cursor:pointer" onclick="delete dailyGoalOverrides['${d}'];render()">&#10005;</button></div>`).join('')+'</div>':''}</div></div></div>`;
+  html+=`<div class="card" style="margin-bottom:12px"><div class="card-hdr"><span class="ctitle">Per-Person Goal Overrides</span></div><div style="padding:12px"><div class="goal-grid">${memberConfig.map(mc=>`<div class="goal-item"><label>${esc(mc.name)}${mc.isTL?' (TL)':''}</label><input type="number" value="${mc.goal||''}" min="1" placeholder="${getMemberGoal(mc.name,fmtDate(new Date()))}" onchange="setPersonGoal('${mc.name}',this.value)"></div>`).join('')}</div></div></div>`;
+  html+=`<div class="card"><div class="card-hdr"><span class="ctitle">Member Exclusions</span></div><div style="padding:12px"><div style="font-size:10px;color:var(--g5);margin-bottom:8px">Toggle to exclude members from rankings and/or team statistics. Team Lead is auto-excluded.</div><div class="member-settings">${memberConfig.map(mc=>`<div class="mem-row"><span class="mname">${esc(mc.name)}</span>${mc.isTL?'<span class="tl-tag">TL</span>':''}<div class="toggle-opts"><label><input type="checkbox" ${mc.exRank||mc.isTL?'checked':''} ${mc.isTL?'disabled':''} onchange="toggleExclude('${mc.name}','rank',this.checked)"> Rankings</label><label><input type="checkbox" ${mc.exStats&&!mc.isTL?'checked':''} ${mc.isTL?'disabled':''} onchange="toggleExclude('${mc.name}','stats',this.checked)"> Stats</label><label><input type="checkbox" ${mc.exReport?'checked':''} onchange="toggleExclude('${mc.name}','report',this.checked)"> Reports</label></div></div>`).join('')}</div></div></div>`;
+  const mk2=currentYear+'_'+currentMonth;
+  html+=`<div class="card"><div class="card-hdr"><span class="ctitle">Month Notes (toggle to include in reports)</span></div><div style="padding:12px"><textarea class="notes-area" id="month-notes" placeholder="Add notes for ${monthName}...">${monthNotes[mk2]||''}</textarea><div style="display:flex;gap:6px;margin-top:8px;align-items:center"><button class="btn primary" onclick="saveNotes()">Save Notes</button><label style="font-size:11px;color:var(--g5);display:flex;align-items:center;gap:4px"><input type="checkbox" id="notes-in-report"> Include in reports</label></div></div></div>`;
+  return html;
+}
+
+function addDailyOverride(){const d=document.getElementById('g-day-date').value;const v=parseInt(document.getElementById('g-day-val').value);if(!d||!v){alert('Enter both a date and a goal.');return;}dailyGoalOverrides[d]=v;render();}
+function setPersonGoal(name,val){const mc=memberConfig.find(m=>m.name===name);if(mc)mc.goal=val?parseInt(val):null;render();}
+function toggleExclude(name,type,val){const mc=memberConfig.find(m=>m.name===name);if(!mc)return;if(type==='rank')mc.exRank=val;if(type==='stats')mc.exStats=val;if(type==='report')mc.exReport=val;render();}
+function saveNotes(){const mk=currentYear+'_'+currentMonth;monthNotes[mk]=document.getElementById('month-notes').value;alert('Notes saved.');}
+
+function renderReports(){const rpts=[{n:"Full Month Report — All Members",d:"Complete daily breakdown for every member"},{n:"Individual Member Report",d:"Detailed per-member breakdown with daily entries"},{n:"Team Summary Report",d:"High-level overview for meetings"},{n:"Meeting Report (with Notes)",d:"Team summary with space for meeting notes"},{n:"Coaching Report",d:"Members below standard with day-by-day detail"},{n:"Top Performers Report",d:"Top 3 with performance detail"},{n:"MTD Progress Report",d:"Month-to-date snapshot with projections"}];return`<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap"><label style="font-size:11px;color:var(--g5);display:flex;align-items:center;gap:4px"><input type="checkbox" id="rpt-notes"> Include month notes</label><label style="font-size:11px;color:var(--g5);display:flex;align-items:center;gap:4px"><input type="checkbox" id="rpt-tl" checked> Include Team Lead row</label><span class="sep"></span><button class="btn dl" onclick="exportAllData()">&#8595; Download All Data</button></div><div class="card"><div class="card-hdr"><span class="ctitle">Available Reports</span></div>${rpts.map((r,i)=>`<div class="rrow"><div><div class="rname">${r.n}</div><div class="rdesc">${r.d}</div></div><button class="btn primary" style="font-size:11px" onclick="printReport(${i})">Print / PDF</button></div>`).join('')}</div><div class="info">Reports open in a new window. Use Ctrl+P to save as PDF or print.</div>`;}
+
+function showAddEntry(){const mOpts=memberConfig.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');showModal(`<div class="mhdr"><span class="mt">Add / Edit Daily Entry</span><span class="mx" onclick="closeModal()">&#10005;</span></div><div class="mbody"><div class="field"><label>Date</label><input type="date" id="ae-date"></div><div class="field"><label>Member</label><select id="ae-member">${mOpts}</select></div><div class="field"><label>Accounts Worked</label><input type="number" id="ae-val" min="0" placeholder="e.g. 75"></div></div><div class="mfoot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="doAddEntry()">Save</button></div>`);}
+function editCell(date,name,current){showModal(`<div class="mhdr"><span class="mt">Edit Entry</span><span class="mx" onclick="closeModal()">&#10005;</span></div><div class="mbody"><div style="font-size:11px;color:var(--g5);margin-bottom:10px">${date} — ${name}</div><div class="field"><label>Accounts Worked</label><input type="number" id="ec-val" value="${current}" min="0"></div><button class="btn" style="font-size:11px;width:100%;margin-top:4px;color:var(--red);border-color:#fca5a5" onclick="deleteEntry('${date}','${name}')">Remove Entry</button></div><div class="mfoot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="doEditCell('${date}','${name}')">Save</button></div>`);}
+function doAddEntry(){const d=document.getElementById('ae-date').value;const name=document.getElementById('ae-member').value;const val=parseInt(document.getElementById('ae-val').value);if(!d||!name||isNaN(val)){alert('All fields required.');return;}if(!productivityData[d])productivityData[d]={};productivityData[d][name]=val;closeModal();render();}
+function doEditCell(date,name){const val=parseInt(document.getElementById('ec-val').value);if(isNaN(val)){alert('Enter a valid number.');return;}if(!productivityData[date])productivityData[date]={};productivityData[date][name]=val;closeModal();render();}
+function deleteEntry(date,name){if(!confirm('Remove this entry?'))return;if(productivityData[date])delete productivityData[date][name];closeModal();render();}
+
+function showUploadData(){showModal(`<div class="mhdr"><span class="mt">Upload Productivity Data</span><span class="mx" onclick="closeModal()">&#10005;</span></div><div class="mbody"><div class="dz" id="upd-dz" onclick="document.getElementById('upd-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleUploadDrop(event)"><input type="file" id="upd-file" accept=".csv,.xlsx,.xls" onchange="processUploadFile(this.files[0])"><div style="font-size:22px;color:var(--g3)">&#8679;</div><div style="font-size:11px;color:var(--g5);margin-top:4px">Click or drag &amp; drop spreadsheet</div></div><div class="info"><strong>Format:</strong> Row 1 = headers. Col A = Date, Col B+ = member names, values = accounts worked.</div><div style="margin-top:6px"><span class="tmpl" onclick="downloadUploadTemplate()">&#8595; Download template</span></div><div id="upd-status" style="margin-top:8px;font-size:11px;color:var(--g5)"></div></div><div class="mfoot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn primary" id="upd-btn" disabled onclick="doUpload()">Import</button></div>`);}
+let pendingUpload=null;
+function handleUploadDrop(e){const f=e.dataTransfer.files[0];if(f)processUploadFile(f);}
+function processUploadFile(file){const status=document.getElementById('upd-status');status.textContent='Reading...';const ext=file.name.split('.').pop().toLowerCase();const reader=new FileReader();reader.onload=e=>{try{let rows=[];if(ext==='csv'){rows=e.target.result.split('\n').map(l=>l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')));}else{const wb=XLSX.read(e.target.result,{type:'array'});rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false});}let headerRow=null,dataStart=0;for(let i=0;i<Math.min(5,rows.length);i++){if(rows[i]&&String(rows[i][0]).toLowerCase()==='date'){headerRow=i;dataStart=i+1;break;}}if(headerRow==null){status.innerHTML='<span style="color:var(--red)">Could not find header row.</span>';return;}const headers=rows[headerRow];const records=[];for(let i=dataStart;i<rows.length;i++){const row=rows[i];if(!row||!row[0])continue;let dateStr=null;if(row[0] instanceof Date){dateStr=fmtDate(row[0]);}else{const d=new Date(row[0]);if(!isNaN(d))dateStr=fmtDate(d);}if(!dateStr)continue;for(let j=1;j<headers.length;j++){const name=String(headers[j]||'').trim();if(!name||name==='Column1')continue;const val=parseInt(row[j]);if(!isNaN(val)&&val>0)records.push({date:dateStr,name,val});}}pendingUpload=records;const btn=document.getElementById('upd-btn');if(records.length>0){btn.disabled=false;status.innerHTML=`<span style="color:var(--green-mid);font-weight:600">&#10003; ${records.length} entries found</span>`;}else{btn.disabled=true;status.innerHTML='<span style="color:var(--red)">No valid entries found.</span>';}}catch(err){if(document.getElementById('upd-status'))document.getElementById('upd-status').innerHTML=`<span style="color:var(--red)">Error: ${err.message}</span>`;}};if(ext==='csv')reader.readAsText(file);else reader.readAsArrayBuffer(file);}
+function doUpload(){if(!pendingUpload)return;let added=0;pendingUpload.forEach(({date,name,val})=>{if(!productivityData[date])productivityData[date]={};const match=memberConfig.find(m=>m.name.toLowerCase().includes(name.toLowerCase().split(' ')[0])||name.toLowerCase().includes(m.name.toLowerCase().split(' ')[0]));const finalName=match?match.name:name;productivityData[date][finalName]=val;added++;});pendingUpload=null;closeModal();alert(`${added} entries imported.`);render();}
+function downloadUploadTemplate(){const header='Date,Antwanna,Julie,Lee Ann,Linda,Melody,Rebecca,Reema,Rhonda,Sherazard,Star,Toya,Joy';const rows=[header,'2026-04-01,75,62,,55,,,70,45,,,80,60,'].join('\n');const blob=new Blob([rows],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Productivity_Upload_Template.csv';a.click();URL.revokeObjectURL(url);}
+
+function exportCalendar(){const days=getFilteredDays();const workdays=getWorkdays(days);const wb=XLSX.utils.book_new();const headerRow=['Member',...workdays.map(d=>fmtDate(d)),'Success Rate','Avg Daily','Total'];const rows=[headerRow];memberConfig.forEach(mc=>{const s=calcMemberStats(mc.name,days);const row=[mc.name+(mc.isTL?' (TL)':'')];workdays.forEach(d=>{const ds=fmtDate(d);row.push(productivityData[ds]?productivityData[ds][mc.name]||'':'');});row.push(s.rate!=null?(s.rate+'%'):'');row.push(s.avg||'');row.push(s.sum||'');rows.push(row);});const mn=new Date(currentYear,currentMonth-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),mn.replace(' ','-'));XLSX.writeFile(wb,`Productivity_${currentYear}_${String(currentMonth).padStart(2,'0')}.xlsx`);}
+function exportAllData(){const wb=XLSX.utils.book_new();[1,2,3].forEach(m=>{const year=2026;const days=getMonthDays(year,m);const workdays=getWorkdays(days);const mn=new Date(year,m-1,1).toLocaleDateString('en-US',{month:'short'});const headerRow=['Member',...workdays.map(d=>fmtDate(d)),'Success Rate','Avg','Total'];const rows=[headerRow];memberConfig.forEach(mc=>{const s=calcMemberStats(mc.name,days);const row=[mc.name+(mc.isTL?' (TL)':'')];workdays.forEach(d=>{const ds=fmtDate(d);row.push(productivityData[ds]?productivityData[ds][mc.name]||'':'');});row.push(s.rate!=null?(s.rate+'%'):'');row.push(s.avg||'');row.push(s.sum||'');rows.push(row);});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),mn+' '+year);});XLSX.writeFile(wb,'PFS_Productivity_2026_All_Months.xlsx');}
+
+function printReport(idx){
+  const days=getFilteredDays();const monthName=new Date(currentYear,currentMonth-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const dt=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const incNotes=document.getElementById('rpt-notes')&&document.getElementById('rpt-notes').checked;
+  const incTL=!document.getElementById('rpt-tl')||document.getElementById('rpt-tl').checked;
+  const mk=currentYear+'_'+currentMonth;const noteText=monthNotes[mk]||'';
+  const showGoal=parseInt(document.getElementById('default-goal').value)||60;
+  const css=`<style>body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:18px;max-width:1000px;margin:0 auto}h1{color:#0f2544;font-size:16px;margin-bottom:2px}h2{color:#1c3a6b;font-size:13px;margin:12px 0 5px;border-bottom:1px solid #e2e8f0;padding-bottom:2px}p.sub{color:#94a3b8;font-size:9px;margin-bottom:12px}table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:10px}th{background:#0f2544;color:#fff;padding:4px 7px;text-align:left}th.r{text-align:right}td{padding:3px 7px;border-bottom:1px solid #e2e8f0}td.r{text-align:right;font-family:monospace}tr:nth-child(even) td{background:#f8f9fb}.g{background:#dcfce7;color:#166534;font-weight:700}.y{background:#fef9c3;color:#854d0e;font-weight:700}.r{background:#fee2e2;color:#991b1b;font-weight:700}.tl{color:#94a3b8;font-style:italic}.note{background:#fdf6e3;border:1px solid #e8c84a;border-radius:4px;padding:8px 10px;font-size:10px;color:#7a5c00;margin:10px 0}.footer{margin-top:14px;border-top:1px solid #e2e8f0;padding-top:7px;font-size:9px;color:#94a3b8}.rank-box{display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:6px 12px;margin:3px;text-align:center;min-width:100px}.rank-box .rname{font-weight:700;color:#0f2544;font-size:11px}.rank-box .rrate{font-size:16px;font-weight:700;color:#16a34a}@media print{body{padding:8px}}</style>`;
+  const hdr=`<h1>PFS Credit Resolution — Refund Team &bull; UF Health Shands</h1><p class="sub">Generated: ${dt} &bull; Period: ${monthName} &bull; Daily Goal: ${showGoal} accounts</p>`;
+  const notesBlock=incNotes&&noteText?`<div class="note"><strong>Notes:</strong> ${noteText}</div>`:'';
+  const titles=["Full Month Report","Individual Member Report","Team Summary","Meeting Report","Coaching Report","Top Performers","MTD Progress Report"];
+  let body=`<h2>${titles[idx]}</h2>${notesBlock}`;
+  const{top,bot}=getRankings(days);
+  const allStats=memberConfig.map(mc=>calcMemberStats(mc.name,days)).filter(s=>incTL||!s.isTL);
+  const teamStats=allStats.filter(s=>!s.exStats&&!s.isTL);
+  let teamMet=0,teamTotal=0;teamStats.forEach(s=>{teamMet+=s.met;teamTotal+=s.total;});
+  const teamRate=teamTotal>0?Math.round(teamMet/teamTotal*100):null;
+  const workdays=getWorkdays(days);
+  if(idx===0){body+=`<table><thead><tr><th>Member</th>${workdays.map(d=>`<th style="text-align:center;min-width:22px">${new Date(d.getTime()+(12*3600000)).toLocaleDateString('en-US',{month:'numeric',day:'numeric'})}</th>`).join('')}<th class="r">Met</th><th class="r">Total</th><th class="r">Rate</th><th class="r">Avg</th></tr></thead><tbody>`;allStats.forEach(s=>{if(s.exReport)return;body+=`<tr><td class="${s.isTL?'tl':''}" style="font-weight:600">${s.name}${s.isTL?' (TL)':''}</td>`;workdays.forEach(d=>{const ds=fmtDate(d);const val=productivityData[ds]?productivityData[ds][s.name]:null;if(val==null){body+=`<td style="text-align:center;color:#ccc">—</td>`;return;}const goal=getMemberGoal(s.name,ds);const cls=s.isTL?'tl':val>=goal?'g':val>=goal-10?'y':'r';body+=`<td class="${cls}" style="text-align:center">${val}</td>`;});body+=`<td class="r">${s.met}</td><td class="r">${s.total}</td><td class="r ${s.isTL?'tl':s.rate>=70?'g':s.rate>=50?'y':'r'}">${pct(s.rate)}</td><td class="r">${s.avg||'—'}</td></tr>`;});body+='</tbody></table>';}
+  else if(idx===1){allStats.filter(s=>!s.exReport).forEach(s=>{body+=`<h2>${s.name}${s.isTL?' (TL)':''} — ${pct(s.rate)} success &bull; ${s.met}/${s.total} days &bull; Avg: ${s.avg||'—'}</h2>`;if(!s.entries.length){body+='<p style="color:#94a3b8">No entries</p>';return;}body+=`<table><thead><tr><th>Date</th><th class="r">Accounts</th><th class="r">Goal</th><th class="r">Status</th><th class="r">vs Goal</th></tr></thead><tbody>`;s.entries.forEach((e,i)=>{const diff=e.val-e.goal;const cls=s.isTL?'tl':e.val>=e.goal?'g':e.val>=e.goal-10?'y':'r';const dow=new Date(e.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});body+=`<tr><td>${dow}</td><td class="r ${cls}">${e.val}</td><td class="r">${e.goal}</td><td class="r">${s.isTL?'TL':e.val>=e.goal?'Met':e.val>=e.goal-10?'Close':'Below'}</td><td class="r" style="color:${diff>=0?'#16a34a':'#dc2626'}">${diff>=0?'+':''}${diff}</td></tr>`;});body+='</tbody></table>';});}
+  else if(idx===2||idx===3){body+=`<table><thead><tr><th>Member</th><th class="r">Met</th><th class="r">Worked</th><th class="r">Rate</th><th class="r">Avg</th><th class="r">Total</th></tr></thead><tbody>`;allStats.filter(s=>!s.exReport).forEach(s=>{const cls=s.isTL?'tl':s.rate>=70?'g':s.rate>=50?'y':'r';body+=`<tr><td class="${s.isTL?'tl':''}" style="font-weight:600">${s.name}${s.isTL?' (TL)':''}</td><td class="r">${s.met||'—'}</td><td class="r">${s.total||'—'}</td><td class="r ${cls}">${pct(s.rate)}</td><td class="r">${s.avg||'—'}</td><td class="r">${s.sum||'—'}</td></tr>`;});body+=`</tbody></table><div style="margin-bottom:10px"><strong>Team MTD Rate: </strong><span style="font-size:14px;font-weight:700;color:${teamRate>=70?'#16a34a':teamRate>=50?'#d97706':'#dc2626'}">${pct(teamRate)}</span></div><h2>Top Performers</h2><div style="margin-bottom:10px">${top.map((s,i)=>`<div class="rank-box"><div class="rname">#${i+1} ${s.name}</div><div class="rrate">${pct(s.rate)}</div></div>`).join('')}</div>`;if(idx===3){body+=`<h2>Meeting Notes</h2><div style="border:1px solid #e2e8f0;border-radius:4px;padding:12px;min-height:80px;color:#94a3b8;font-style:italic">${noteText||'[Add meeting notes here]'}</div>`;}}
+  else if(idx===4){const coaching=allStats.filter(s=>!s.isTL&&!s.exReport&&s.rate!=null&&s.rate<70).sort((a,b)=>a.rate-b.rate);if(!coaching.length){body+='<p style="color:#94a3b8">All members on track.</p>';}else{coaching.forEach(s=>{body+=`<h2>${s.name} — ${pct(s.rate)} (${s.met}/${s.total} days)</h2>`;const below=s.entries.filter(e=>e.val<e.goal);body+=`<table><thead><tr><th>Date</th><th class="r">Accounts</th><th class="r">Goal</th><th class="r">Shortfall</th></tr></thead><tbody>`;below.forEach(e=>{const dow=new Date(e.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});body+=`<tr><td>${dow}</td><td class="r r">${e.val}</td><td class="r">${e.goal}</td><td class="r" style="color:#dc2626">${e.val-e.goal}</td></tr>`;});body+='</tbody></table>';});}}
+  else if(idx===5){top.forEach((s,i)=>{body+=`<div class="rank-box"><div class="rname">#${i+1} ${s.name}</div><div class="rrate">${pct(s.rate)}</div><div style="font-size:9px;color:#64748b">${s.met}/${s.total} days &bull; avg ${s.avg}</div></div>`;});body+='<br><br>';top.forEach(s=>{body+=`<h2>${s.name} — Detail</h2><table><thead><tr><th>Date</th><th class="r">Accounts</th><th class="r">Goal</th><th class="r">vs Goal</th></tr></thead><tbody>`;s.entries.forEach(e=>{const diff=e.val-e.goal;const dow=new Date(e.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});body+=`<tr><td>${dow}</td><td class="r g">${e.val}</td><td class="r">${e.goal}</td><td class="r" style="color:#16a34a">+${diff>0?diff:0}</td></tr>`;});body+='</tbody></table>';});}
+  else if(idx===6){const today=new Date();const monthEnd=new Date(currentYear,currentMonth,0);const daysLeft=Math.max(0,Math.ceil((monthEnd-today)/86400000));const workdaysLeft=Array.from({length:daysLeft},(_,i)=>{const d=new Date(today);d.setDate(d.getDate()+i+1);return d;}).filter(d=>!isWeekend(d)).length;body+=`<table><thead><tr><th>Member</th><th class="r">Rate</th><th class="r">Avg</th><th class="r">Total MTD</th><th class="r">Projected</th><th class="r">On Track?</th></tr></thead><tbody>`;allStats.filter(s=>!s.exReport).forEach(s=>{const proj=s.avg&&workdaysLeft?s.sum+s.avg*workdaysLeft:null;const ot=s.rate!=null?s.rate>=60?'Yes':'No':'—';const cls=s.isTL?'tl':ot==='Yes'?'g':ot==='No'?'r':'';body+=`<tr><td class="${s.isTL?'tl':''}" style="font-weight:600">${s.name}${s.isTL?' (TL)':''}</td><td class="r ${s.isTL?'tl':''}">${pct(s.rate)}</td><td class="r">${s.avg||'—'}</td><td class="r">${s.sum||'—'}</td><td class="r">${proj?Math.round(proj).toLocaleString():'—'}</td><td class="r ${cls}">${s.isTL?'TL':ot}</td></tr>`;});body+=`</tbody></table><p style="color:#64748b;font-size:10px;margin-top:6px">Est. ${workdaysLeft} workdays remaining.</p>`;}
+  body+=`<div class="footer">A Joy Watford Design &bull; PFS Credit Resolution Dept (Refund Team) &bull; UF Health Shands</div>`;
+  const win=window.open('','_blank','width=1020,height=720');win.document.write(`<html><head>${css}<style>@media print{.no-print{display:none!important}}</style></head><body><div class=\"no-print\" style=\"position:sticky;top:0;z-index:99;background:#0f2544;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:3px solid #c9a227\"><span style=\"color:rgba(255,255,255,.6);font-size:11px\">Review report before printing</span><button onclick=\"window.print()\" style=\"background:#c9a227;color:#0f2544;border:none;padding:7px 20px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif\">&#128438;&nbsp; Print / Save as PDF</button></div>${hdr}${body}</body></html>`);win.document.close();win.focus();
+}
+
+function showModal(html){closeModal();const bg=document.createElement('div');bg.className='modal-bg';bg.id='modal-bg';bg.innerHTML=`<div class="modal">${html}</div>`;bg.onclick=e=>{if(e.target===bg)closeModal();};document.body.appendChild(bg);}
+function closeModal(){const m=document.getElementById('modal-bg');if(m)m.remove();}
+
+function render(){const b=document.getElementById('main-body');if(!b)return;switch(currentTab){case 'dashboard':b.innerHTML=renderDashboard();break;case 'daily':b.innerHTML=renderDaily();break;case 'member':b.innerHTML=renderMember();break;case 'goals':b.innerHTML=renderGoals();break;case 'reports':b.innerHTML=renderReports();break;}}
+render();
+
+const _NOW=new Date();document.getElementById('hdr-date').innerHTML=_NOW.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'long',day:'numeric'})+'<br>'+_NOW.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+let lastUpdatedStamp = null;
+
+function setLastUpdated(name){
+  lastUpdatedStamp = {name, time: new Date()};
+  const el = document.getElementById('last-updated');
+  if(el) el.innerHTML = 'Last updated by <strong style="color:rgba(255,255,255,.6)">' + name + '</strong> &bull; ' + lastUpdatedStamp.time.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' at ' + lastUpdatedStamp.time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+function saveSnapshot(){
+  showModal(`<div class="mhdr"><span class="mt">&#8681; Save &amp; Share</span><span class="mx" onclick="closeModal()">&#10005;</span></div>
+  <div class="mbody">
+    <div style="font-size:12px;color:var(--g5);margin-bottom:12px;line-height:1.6">This will stamp your name and the current date/time into the file, then download it. Upload the downloaded file to Teams to replace the old version — your manager will see your updates when they open it.</div>
+    <div class="field"><label>Your Name</label><input type="text" id="snap-name" placeholder="e.g. Joy Watford" value="${lastUpdatedStamp?lastUpdatedStamp.name:''}"></div>
+    <div class="info" style="margin-top:0">After downloading, go to Teams &rarr; Files tab &rarr; upload and replace the existing file.</div>
+  </div>
+  <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn dl" onclick="doSaveSnapshot()">&#8681; Download Updated File</button></div>`);
+}
+
+function doSaveSnapshot(){
+  const name = (document.getElementById('snap-name').value||'').trim();
+  if(!name){alert('Please enter your name.');return;}
+  setLastUpdated(name);
+  closeModal();
+
+  // Serialize all current data into the HTML and trigger download
+  const stamp = lastUpdatedStamp.time.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' at '+lastUpdatedStamp.time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  // Build a data payload to embed
+  const payload = {
+    productivityData,
+    monthlyGoals,
+    dailyGoalOverrides,
+    monthNotes,
+    memberConfig: memberConfig.map(m=>({...m})),
+    lastUpdatedBy: name,
+    lastUpdatedAt: lastUpdatedStamp.time.toISOString()
+  };
+
+  // Get current HTML and inject the saved data
+  const currentHTML = document.documentElement.outerHTML;
+  const injection = `\n// SAVED DATA SNAPSHOT — ${stamp} by ${name}\nconst _SAVED_DATA = ${JSON.stringify(payload)};\nif(_SAVED_DATA){Object.assign(productivityData,_SAVED_DATA.productivityData);Object.assign(monthlyGoals,_SAVED_DATA.monthlyGoals);Object.assign(dailyGoalOverrides,_SAVED_DATA.dailyGoalOverrides);Object.assign(monthNotes,_SAVED_DATA.monthNotes);if(_SAVED_DATA.memberConfig)memberConfig.splice(0,memberConfig.length,..._SAVED_DATA.memberConfig);if(_SAVED_DATA.lastUpdatedBy){lastUpdatedStamp={name:_SAVED_DATA.lastUpdatedBy,time:new Date(_SAVED_DATA.lastUpdatedAt)};const el=document.getElementById('last-updated');if(el)el.innerHTML='Last updated by <strong style=\\"color:rgba(255,255,255,.6)\\">'+ _SAVED_DATA.lastUpdatedBy+'</strong> &bull; '+new Date(_SAVED_DATA.lastUpdatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' at '+new Date(_SAVED_DATA.lastUpdatedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});}}\n`;
+
+  const updatedHTML = currentHTML.replace('seedData();\n', 'seedData();\n' + injection);
+
+  const blob = new Blob([updatedHTML], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'PFS_Monthly_Productivity_Dashboard.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+</script>
+</body>
+</html>
